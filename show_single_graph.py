@@ -1,7 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import graph_input as gt
-
+#https://networkx.org/documentation/stable/auto_examples/drawing/plot_weighted_graph.html
 
 
 
@@ -17,6 +17,8 @@ def show_one_pic(nodes,edge,graphType="direct weight"):
 if __name__ == "__main__":
     nodes,edge = gt.translation_tool()
     show_one_pic(nodes,edge)
+
+
 #First, graph_input, get nodes and edge and weight
 #Second, according to the info you get, use networkx to get x and y of node position
 #Third, matplotlib to show graph
