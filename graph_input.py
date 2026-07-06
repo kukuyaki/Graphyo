@@ -15,11 +15,19 @@ def translation_tool():
             continue
         edge.append(x)
 
+    nodes = set()
+    for i in edge:
+        nodes.add(i[0])
+        nodes.add(i[1])
     edge.sort(key=lambda x:(x[0], x[1]))
+
+
+    print("*"*20)
     for i in edge:
         print(i)
-    print(edge)
-
+    print(f"{edge=}")
+    print(f"{nodes =}")
+    return nodes, edge
 if __name__ == "__main__":
     translation_tool()
 
