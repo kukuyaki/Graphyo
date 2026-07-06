@@ -1,3 +1,5 @@
+#docker run --rm -it graphyo-env
+
 def translation_tool():
     x = 1
     edge = []
@@ -21,4 +23,3 @@ def translation_tool():
 if __name__ == "__main__":
     translation_tool()
 
-    #
