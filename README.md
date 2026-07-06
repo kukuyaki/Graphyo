@@ -1,6 +1,6 @@
 # Graphyo
 
-'''
+```
 A Python tool for learning and exploring Graph Algorithms.<br>
 Designed for students studying algorithms class, Graphyo helps visualize and understand core concepts like Bellman-Ford, BFS, and more.<br>
 
@@ -21,4 +21,4 @@ Knowing the meaning instead of just copying and pasting.<br>
 
 Best,<br>
 *Kuku Yaki*<br>
-'''
+```
