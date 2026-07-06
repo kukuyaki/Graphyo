@@ -1,0 +1,24 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+import graph_input as gt
+
+
+
+
+def show_one_pic(nodes,edge,graphType="direct weight"):
+    G = nx.DiGraph()  # DiGraph為有向圖, Graph為無向
+    G.add_nodes_from(nodes)
+    G.add_edges_from(edge)
+
+    nx.draw(G, with_labels=True, font_weight='bold')
+    plt.show()
+    return 0
+
+if __name__ == "__main__":
+    nodes,edge = gt.translation_tool()
+    show_one_pic(nodes,edge)
+#First, graph_input, get nodes and edge and weight
+#Second, according to the info you get, use networkx to get x and y of node position
+#Third, matplotlib to show graph
+
+#this is graph show method, not even include path finding algorithm
