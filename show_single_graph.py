@@ -9,8 +9,12 @@ def show_one_pic(nodes,edge,graphType="direct weight"):
     G = nx.DiGraph()  # DiGraph為有向圖, Graph為無向
     G.add_nodes_from(nodes)
     G.add_edges_from(edge)
-
     nx.draw(G, with_labels=True, font_weight='bold')
+
+    pos = nx.spring_layout(G,seed=7)
+    nx.draw_networkx_nodes(G,pos,node_size=700)
+    nx.draw_networkx_edges()
+    nx.draw_networkx_labels()
     plt.show()
     return 0
 
