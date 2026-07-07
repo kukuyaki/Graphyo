@@ -1,5 +1,7 @@
 from manim import *
 
+#uv run manim -ql -s manim_test.py GenerateGraphImage
+
 class GenerateGraphImage(Scene):
     def construct(self):
         # 1. 你的原始輸入資料：[起點, 終點, 權重]
@@ -8,6 +10,7 @@ class GenerateGraphImage(Scene):
             ["C", "B", 5],
             ["B", "D", 2],
             ["A", "C", 1],
+            # ["A", "GG", 50],
             ["D", "A", 7]
         ]
         
