@@ -20,3 +20,5 @@ Knowing the meaning instead of just copying and pasting.<br>
 
 Best,<br>
 *Kuku Yaki*<br>
+
+https://docs.manim.community/en/stable/tutorials/building_blocks.html
