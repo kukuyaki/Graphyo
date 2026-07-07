@@ -26,24 +26,26 @@ class ExampleRotation(Scene):
         scale = int(config.frame_height/2)
         
         for i in nodes.values():
-            i = [j*scale for j in i]
-            start_pos = np.array([i[0],scale+5 , 0])
-            i = np.array([i[0],i[1] , 0])
-            target_positions.append(i)
+            ii = [j*scale for j in i]
+            start_pos = np.array([ii[0],scale+5 , 0])
+            ii = np.array([ii[0],ii[1] , 0])
+            target_positions.append(ii)
             m1 = Circle(radius=0.1, color=BLUE).move_to(start_pos).set_fill(YELLOW, opacity=1.0).set_stroke(RED)
             g_nodes.append(m1)
         
-        line_ground = [i[:2].copy for i in edges]
+        line_ground = [i[:2].copy() for i in edges]
         #change "a" to [ 0.29783812, -0.06193126, 0]
         for i,j in enumerate(line_ground):
             line_ground[i][0] = nodes[line_ground[i][0]]
             line_ground[i][1] = nodes[line_ground[i][1]]
+        line_animations = []
+        for num in range(len(line_ground)):
+            dot1 = [t1*scale for t1 in line_ground[num][0]]
+            dot2 = [t1*scale for t1 in line_ground[num][1]]
+            line = Line(dot1,dot2).set_color(WHITE).set_z_index(-1)
+            line_animations.append(Create(line))
+        
 
-        dot1 = line_ground[0][0]*scale 
-        dot2 = line_ground[0][1]*scale 
-        line = Line(dot1,dot2).set_color(WHITE)
-
-        self.add(line)
         self.add(*g_nodes)
         drop_animations = []
         for node, target in zip(g_nodes, target_positions):
@@ -51,5 +53,7 @@ class ExampleRotation(Scene):
             
         # 一口氣同時降落
         self.play(*drop_animations, run_time=1.2,rate_func=ease_out_bounce)
+        self.wait(0.3)
+        self.play(*line_animations, run_time=4,rate_func=smooth)
         self.wait()
 
