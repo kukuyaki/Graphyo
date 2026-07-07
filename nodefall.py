@@ -9,7 +9,7 @@ from manim import *
 import numpy as np
 from manim.utils.rate_functions import ease_out_bounce
 from early_work.show_single_graph import pos_f
-# uv run manim -pql circleanimation.py
+# uv run manim -pql nodefall.py
 class ExampleRotation(Scene):
     def construct(self):
         # nodes = {'A': [ 0.2665238 , -0.10578828,0],
@@ -32,10 +32,12 @@ class ExampleRotation(Scene):
         nodes,edges = pos_f()
         g_nodes = []
         target_positions=[]
-        scale = int(config.frame_height/2)
+        scale1 = int(0.9*config.frame_width/2)
+        scale2 = int(0.9*config.frame_height/2)
+        scale = int(0.9*config.frame_height/2)
         
         for d,i in zip(nodes.keys(),nodes.values()):
-            ii = [j*scale for j in i]
+            ii = [i[0]*scale1, i[1]*scale2]
             start_pos = np.array([ii[0],scale+5 , 0])
             ii = np.array([ii[0],ii[1] , 0])
             target_positions.append(ii)
@@ -58,8 +60,8 @@ class ExampleRotation(Scene):
         line_animations = []
         label_t_group = []
         for num in range(len(line_ground)):
-            dot1 = [t1*scale for t1 in line_ground[num][0]]
-            dot2 = [t1*scale for t1 in line_ground[num][1]]
+            dot1 = [line_ground[num][0][0]*scale1,line_ground[num][0][1]*scale2,0]
+            dot2 = [line_ground[num][1][0]*scale1,line_ground[num][1][1]*scale2,0]
             line = Line(dot1,dot2).set_color(WHITE).set_z_index(-1)
             
             # --- 以下為新增的文字旋轉與偏移邏輯 ---

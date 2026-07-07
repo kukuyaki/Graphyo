@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from early_work.graph_input import test,translation_tool
+from early_work.graph_input import test,translation_tool,random_gene
 #https://networkx.org/documentation/stable/auto_examples/drawing/plot_weighted_graph.html
 
 
@@ -43,23 +43,20 @@ def show_weight_direct_pic(edge):
     return 0
 
 def pos_f():
-    nodes,edge = translation_tool()
+    nodes, edge = random_gene()
+    unique_nodes = list(set([n for e in edge for n in e[:2]]))
+    posw = {old_node: chr(65 + i) for i, old_node in enumerate(unique_nodes)}
+    n_edge = [[posw[a], posw[b], w] for a, b, w in edge]
     G = nx.DiGraph()
-    for a,b,w in edge:
-        G.add_edge(a, b, weight=1/w)
-    pos = nx.spring_layout(G, seed=7)
-    n=0
-    posn = {}
-    posw = {}
-    for i in pos.keys():
-        posn[chr(65+n)] = [float(pos[i][0]),float(pos[i][1]),0]
-        posw[i] = chr(65+n)
-        n = n+1
-    n_edge = []
-    for i in edge:
-        n_edge.append([posw[i[0]],posw[i[1]],i[2]])
-    
-    return posn,n_edge
+    big_n = int(max([i[2] for i in n_edge])*1.2)+1
+    for a, b, w in n_edge:
+        G.add_edge(a, b, weight=big_n-w)
+    pos_init = nx.spring_layout(G, k=0.8, iterations=50,  seed=42)
+    pos = nx.kamada_kawai_layout(G, pos=pos_init)
+    posn = {node: [float(coords[0]), float(coords[1]), 0] for node, coords in pos.items()}
+    print(posn)
+    print(n_edge)
+    return posn, n_edge
 if __name__ == "__main__":
     # nodes,edge = gt.translation_tool()
     nodes,edge = gt.test()
