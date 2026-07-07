@@ -21,6 +21,20 @@ def translation_tool():
         nodes.add(i[1])
     edge.sort(key=lambda x:(x[0], x[1]))
 
+    print("*"*20)
+    for i in edge:
+        print(i)
+    print(f"{edge=}")
+    print(f"{nodes =}")
+    return nodes, edge
+
+def test():
+    edge = [[1,2,3],[1,3,3],[1,8,3],[4,2,3],[1,1,3],[1,9,3],[10,2,3],[16,23,10]]
+    nodes = set()
+    for i in edge:
+        nodes.add(i[0])
+        nodes.add(i[1])
+    edge.sort(key=lambda x:(x[0], x[1]))
 
     print("*"*20)
     for i in edge:
@@ -28,6 +42,7 @@ def translation_tool():
     print(f"{edge=}")
     print(f"{nodes =}")
     return nodes, edge
+
 if __name__ == "__main__":
     translation_tool()
 
