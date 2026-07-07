@@ -1,5 +1,5 @@
 #docker run --rm -it graphyo-env
-
+import random.random
 def translation_tool():
     x = 1
     edge = []
@@ -20,7 +20,6 @@ def translation_tool():
         nodes.add(i[0])
         nodes.add(i[1])
     edge.sort(key=lambda x:(x[0], x[1]))
-
     print("*"*20)
     for i in edge:
         print(i)
@@ -42,7 +41,9 @@ def test():
     print(f"{edge=}")
     print(f"{nodes =}")
     return nodes, edge
+def random_gene():
 
+    return nodes, edge
 if __name__ == "__main__":
     translation_tool()
 

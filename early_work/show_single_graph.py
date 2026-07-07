@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-import graph_input as gt
+from early_work.graph_input import test,translation_tool
 #https://networkx.org/documentation/stable/auto_examples/drawing/plot_weighted_graph.html
 
 
@@ -41,11 +41,31 @@ def show_weight_direct_pic(edge):
     plt.tight_layout()
     plt.show()
     return 0
+
+def pos_f():
+    nodes,edge = translation_tool()
+    G = nx.DiGraph()
+    for a,b,w in edge:
+        G.add_edge(a, b, weight=1/w)
+    pos = nx.spring_layout(G, seed=7)
+    n=0
+    posn = {}
+    posw = {}
+    for i in pos.keys():
+        posn[chr(65+n)] = [float(pos[i][0]),float(pos[i][1]),0]
+        posw[i] = chr(65+n)
+        n = n+1
+    n_edge = []
+    for i in edge:
+        n_edge.append([posw[i[0]],posw[i[1]],i[2]])
+    
+    return posn,n_edge
 if __name__ == "__main__":
     # nodes,edge = gt.translation_tool()
     nodes,edge = gt.test()
-    show_direct_pic(nodes,edge)
-    show_weight_direct_pic(edge)
+    pos_f(edge)
+    # show_direct_pic(nodes,edge)
+    # show_weight_direct_pic(edge)
 
 
 #First, graph_input, get nodes and edge and weight
