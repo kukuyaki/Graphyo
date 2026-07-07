@@ -23,14 +23,27 @@ class ExampleRotation(Scene):
                 ["i","h",20]]
         g_nodes = []
         target_positions=[]
+        scale = int(config.frame_height/2)
+        
         for i in nodes.values():
-            i = [j*config.frame_height/2 for j in i]
-            start_pos = np.array([i[0],config.frame_height/2+5 , 0])
+            i = [j*scale for j in i]
+            start_pos = np.array([i[0],scale+5 , 0])
             i = np.array([i[0],i[1] , 0])
             target_positions.append(i)
             m1 = Circle(radius=0.1, color=BLUE).move_to(start_pos).set_fill(YELLOW, opacity=1.0).set_stroke(RED)
             g_nodes.append(m1)
-            
+        
+        line_ground = [i[:2].copy for i in edges]
+        #change "a" to [ 0.29783812, -0.06193126, 0]
+        for i,j in enumerate(line_ground):
+            line_ground[i][0] = nodes[line_ground[i][0]]
+            line_ground[i][1] = nodes[line_ground[i][1]]
+
+        dot1 = line_ground[0][0]*scale 
+        dot2 = line_ground[0][1]*scale 
+        line = Line(dot1,dot2).set_color(WHITE)
+
+        self.add(line)
         self.add(*g_nodes)
         drop_animations = []
         for node, target in zip(g_nodes, target_positions):
