@@ -1,0 +1,19 @@
+# Python 虛擬環境
+.venv
+venv/
+env/
+
+# Python 快取
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE 設定
+.vscode/
+.idea/
+
+# 打包與發佈
+dist/
+build/
+*.egg-info/
+media/*

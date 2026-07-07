@@ -21,6 +21,9 @@ def show_weight_direct_pic(edge):
     
 
     pos = nx.spring_layout(G, seed=7)  # positions for all nodes - seed for reproducibility
+    print(pos)
+    for i in pos.values():
+        print(i)
     edge_labels = nx.get_edge_attributes(G, "weight")
     eAll = [(u, v) for (u, v, d) in G.edges(data=True) ]
 

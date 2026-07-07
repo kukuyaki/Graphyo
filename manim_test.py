@@ -42,3 +42,5 @@ class GenerateGraphImage(Scene):
         
         # 5. 直接將圖形繪製在畫面上
         self.add(graph)
+
+
