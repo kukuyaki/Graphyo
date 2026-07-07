@@ -1,6 +1,6 @@
 from manim import *
 import numpy as np
-
+#uv run manim -pql circleanimation.py
 class ExampleRotation(Scene):
     def construct(self):
         nodes = [[ 0.29783812, -0.06193126, 0],
