@@ -547,52 +547,43 @@ run_dfs_and_record(graph_input_json)
         }
 
         // 安全複製到剪貼簿
-        function copyToClipboard(text, successMessage) {
-            try {
-                const tempTextArea = document.createElement("textarea");
-                tempTextArea.value = text;
-                tempTextArea.style.position = "absolute";
-                tempTextArea.style.left = "-9999px";
-                tempTextArea.style.top = "0";
-                document.body.appendChild(tempTextArea);
-                
-                tempTextArea.select();
-                document.execCommand("copy");
-                document.body.removeChild(tempTextArea);
-                
-                // 觸發精美綠色成功提示
-                const toast = document.getElementById('toast-container');
-                const msgEl = document.getElementById('toast-message');
-                msgEl.innerText = successMessage;
-                
-                const toastBg = toast.querySelector('div');
-                toastBg.className = "bg-emerald-950 border border-emerald-800 text-emerald-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3";
-                const toastIcon = toast.querySelector('i');
-                toastIcon.setAttribute('data-lucide', 'check-circle-2');
-                toastIcon.className = "w-5 h-5 text-emerald-400 shrink-0 mt-0.5";
+        async function copyToClipboard(text, successMessage) {
+    try {
+        // 使用現代瀏覽器官方標準 API
+        await navigator.clipboard.writeText(text);
+        
+        // --- 下方為原本的 UI 提示邏輯，保持不變 ---
+        const toast = document.getElementById('toast-container');
+        const msgEl = document.getElementById('toast-message');
+        msgEl.innerText = successMessage;
+        
+        const toastBg = toast.querySelector('div');
+        toastBg.className = "bg-emerald-950 border border-emerald-800 text-emerald-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3";
+        const toastIcon = toast.querySelector('i');
+        toastIcon.setAttribute('data-lucide', 'check-circle-2');
+        toastIcon.className = "w-5 h-5 text-emerald-400 shrink-0 mt-0.5";
+        lucide.createIcons();
+        
+        toast.classList.remove('translate-x-80', 'opacity-0', 'pointer-events-none');
+        toast.classList.add('translate-x-0', 'opacity-100');
+        
+        setTimeout(() => {
+            toast.classList.add('translate-x-80', 'opacity-0', 'pointer-events-none');
+            toast.classList.remove('translate-x-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toastBg.className = "bg-red-950 border border-red-800 text-red-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3";
+                toastIcon.setAttribute('data-lucide', 'alert-circle');
+                toastIcon.className = "w-5 h-5 text-red-400 shrink-0 mt-0.5";
                 lucide.createIcons();
-                
-                toast.classList.remove('translate-x-80', 'opacity-0', 'pointer-events-none');
-                toast.classList.add('translate-x-0', 'opacity-100');
-                
-                setTimeout(() => {
-                    toast.classList.add('translate-x-80', 'opacity-0', 'pointer-events-none');
-                    toast.classList.remove('translate-x-0', 'opacity-100');
-                    
-                    // 還原為紅色錯誤樣式
-                    setTimeout(() => {
-                        toastBg.className = "bg-red-950 border border-red-800 text-red-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3";
-                        toastIcon.setAttribute('data-lucide', 'alert-circle');
-                        toastIcon.className = "w-5 h-5 text-red-400 shrink-0 mt-0.5";
-                        lucide.createIcons();
-                    }, 400);
-                }, 3000);
-                
-            } catch (err) {
-                console.error("複製到剪貼簿失敗：", err);
-                showToast("複製到剪貼簿失敗，可能您的瀏覽器安全政策不支援此動作。");
-            }
-        }
+            }, 400);
+        }, 3000);
+        
+    } catch (err) {
+        console.error("複製失敗：", err);
+        showToast("複製失敗：瀏覽器拒絕存取剪貼簿。請確認您是否在網頁載入時有允許該網域的權限。");
+    }
+}
 
         // 階段 1：單獨執行圖形定義
         async function executeGraphCode() {
