@@ -548,41 +548,59 @@ run_dfs_and_record(graph_input_json)
 
         // 安全複製到剪貼簿
         async function copyToClipboard(text, successMessage) {
+    // 1. 執行複製邏輯
     try {
-        // 使用現代瀏覽器官方標準 API
-        await navigator.clipboard.writeText(text);
-        
-        // --- 下方為原本的 UI 提示邏輯，保持不變 ---
-        const toast = document.getElementById('toast-container');
-        const msgEl = document.getElementById('toast-message');
-        msgEl.innerText = successMessage;
-        
-        const toastBg = toast.querySelector('div');
-        toastBg.className = "bg-emerald-950 border border-emerald-800 text-emerald-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3";
-        const toastIcon = toast.querySelector('i');
-        toastIcon.setAttribute('data-lucide', 'check-circle-2');
-        toastIcon.className = "w-5 h-5 text-emerald-400 shrink-0 mt-0.5";
-        lucide.createIcons();
-        
-        toast.classList.remove('translate-x-80', 'opacity-0', 'pointer-events-none');
-        toast.classList.add('translate-x-0', 'opacity-100');
-        
-        setTimeout(() => {
-            toast.classList.add('translate-x-80', 'opacity-0', 'pointer-events-none');
-            toast.classList.remove('translate-x-0', 'opacity-100');
-            
-            setTimeout(() => {
-                toastBg.className = "bg-red-950 border border-red-800 text-red-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3";
-                toastIcon.setAttribute('data-lucide', 'alert-circle');
-                toastIcon.className = "w-5 h-5 text-red-400 shrink-0 mt-0.5";
-                lucide.createIcons();
-            }, 400);
-        }, 3000);
-        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            // 降級方案
+            const temp = document.createElement("textarea");
+            temp.value = text;
+            temp.style.position = "fixed";
+            temp.style.left = "-9999px";
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+        }
     } catch (err) {
         console.error("複製失敗：", err);
-        showToast("複製失敗：瀏覽器拒絕存取剪貼簿。請確認您是否在網頁載入時有允許該網域的權限。");
+        return; // 複製失敗直接跳出
     }
+
+    // 2. 安全的 UI 顯示邏輯
+    const toast = document.getElementById('toast-container');
+    const msgEl = document.getElementById('toast-message');
+    if (!toast || !msgEl) return; // 防護：如果 Toast 元件不存在就跳過 UI 更新
+
+    msgEl.innerText = successMessage;
+    
+    const toastBg = toast.querySelector('div');
+    const toastIcon = toast.querySelector('i'); // 這裡抓取 icon
+
+    if (toastBg && toastIcon) {
+        // 設定成功樣式
+        toastBg.className = "bg-emerald-950 border border-emerald-800 text-emerald-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3";
+        toastIcon.setAttribute('data-lucide', 'check-circle-2');
+        lucide.createIcons();
+    }
+    
+    toast.classList.remove('translate-x-80', 'opacity-0', 'pointer-events-none');
+    toast.classList.add('translate-x-0', 'opacity-100');
+    
+    setTimeout(() => {
+        toast.classList.add('translate-x-80', 'opacity-0', 'pointer-events-none');
+        toast.classList.remove('translate-x-0', 'opacity-100');
+        
+        // 恢復樣式
+        setTimeout(() => {
+            if (toastBg && toastIcon) {
+                toastBg.className = "bg-red-950 border border-red-800 text-red-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3";
+                toastIcon.setAttribute('data-lucide', 'alert-circle');
+                lucide.createIcons();
+            }
+        }, 400);
+    }, 3000);
 }
 
         // 階段 1：單獨執行圖形定義
