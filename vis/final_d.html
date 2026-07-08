@@ -553,7 +553,6 @@ run_dfs_and_record(graph_input_json)
         if (navigator.clipboard && navigator.clipboard.writeText) {
             await navigator.clipboard.writeText(text);
         } else {
-            // 降級方案
             const temp = document.createElement("textarea");
             temp.value = text;
             temp.style.position = "fixed";
@@ -564,9 +563,43 @@ run_dfs_and_record(graph_input_json)
             document.body.removeChild(temp);
         }
     } catch (err) {
-        console.error("複製失敗：", err);
-        return; // 複製失敗直接跳出
+        console.error("複製動作失敗：", err);
+        return; 
     }
+
+    // 2. UI 顯示邏輯 (修正選取器邏輯)
+    const toast = document.getElementById('toast-container');
+    const msgEl = document.getElementById('toast-message');
+    if (!toast || !msgEl) return;
+
+    msgEl.innerText = successMessage;
+    
+    const toastBg = toast.querySelector('div');
+    // 修改選取方式：尋找含有 data-lucide 屬性的元素，更穩健
+    const toastIcon = toast.querySelector('[data-lucide]');
+
+    if (toastBg && toastIcon) {
+        toastBg.className = "bg-emerald-950 border border-emerald-800 text-emerald-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3";
+        toastIcon.setAttribute('data-lucide', 'check-circle-2');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    
+    toast.classList.remove('translate-x-80', 'opacity-0', 'pointer-events-none');
+    toast.classList.add('translate-x-0', 'opacity-100');
+    
+    setTimeout(() => {
+        toast.classList.add('translate-x-80', 'opacity-0', 'pointer-events-none');
+        toast.classList.remove('translate-x-0', 'opacity-100');
+        
+        setTimeout(() => {
+            if (toastBg && toastIcon) {
+                toastBg.className = "bg-red-950 border border-red-800 text-red-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3";
+                toastIcon.setAttribute('data-lucide', 'alert-circle');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }, 400);
+    }, 3000);
+}
 
     // 2. 安全的 UI 顯示邏輯
     const toast = document.getElementById('toast-container');
