@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pyodide 網頁端雙階段 Python 演算法沙盒與播放器</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vis.js CDN -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Pyodide CDN -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+    <style>
+        #network-canvas {
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+        }
+        /* 滾動條客製化 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen w-screen flex flex-col overflow-hidden font-sans">
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-3.5 flex justify-between items-center shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="p-2 bg-emerald-600 rounded-lg text-white">
+                <i data-lucide="terminal" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white">Pyodide 雙階段 Python 演算法沙盒</h1>
+                <p class="text-xs text-slate-400">階段1生成地圖資料 ➔ 自動注入 ➔ 階段2錄製演算法 steps</p>
+            </div>
+        </div>
+        
+        <!-- Pyodide 載入狀態標籤 -->
+        <div id="pyodide-status" class="flex items-center space-x-2.5 bg-slate-800 px-4 py-2 rounded-full text-xs">
+            <span id="status-dot" class="w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping"></span>
+            <span id="status-text" class="text-slate-300 font-medium">正在啟動 WebAssembly 核心...</span>
+        </div>
+    </header>
+
+    <!-- 主工作區 -->
+    <main class="flex-1 flex overflow-hidden p-4 gap-4">
+        
+        <!-- 左側：雙 Python 編輯器與終端機 (W: 45%) -->
+        <div class="w-[45%] flex flex-col gap-3 overflow-hidden h-full">
+            <!-- 區塊 1：圖形生成定義 (Python) -->
+            <div class="flex-1 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl min-h-0">
+                <div class="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex justify-between items-center shrink-0">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="network" class="w-4 h-4 text-emerald-500"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">1. 圖形定義 (Python)</span>
+                    </div>
+                    <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">graph_gen.py</span>
+                </div>
+                <!-- 圖形編輯器 -->
+                <textarea id="editor-graph" class="flex-1 w-full p-3 bg-slate-950 text-emerald-400 font-mono text-xs focus:outline-none resize-none leading-relaxed overflow-y-auto" spellcheck="false"></textarea>
+            </div>
+
+            <!-- 區塊 2：演算法與步驟錄製 (Python) -->
+            <div class="flex-1 flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl min-h-0">
+                <div class="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex justify-between items-center shrink-0">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="code-2" class="w-4 h-4 text-indigo-400"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">2. 演算法邏輯 & 步驟錄製 (Python)</span>
+                    </div>
+                    <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">step_recorder.py</span>
+                </div>
+                <!-- 演算法編輯器 -->
+                <textarea id="editor-algo" class="flex-1 w-full p-3 bg-slate-950 text-cyan-400 font-mono text-xs focus:outline-none resize-none leading-relaxed overflow-y-auto" spellcheck="false"></textarea>
+            </div>
+
+            <!-- 執行與重置按鈕列 -->
+            <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl shrink-0 flex gap-2">
+                <button id="btn-run" disabled class="flex-1 flex items-center justify-center space-x-2 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all shadow-lg active:scale-95 text-xs">
+                    <i data-lucide="play" class="w-4 h-4"></i>
+                    <span>執行兩階段流程並渲染</span>
+                </button>
+                <button id="btn-restore-template" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-all" title="恢復預設雙範本">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- 虛擬終端機 Console -->
+            <div class="h-28 bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col overflow-hidden shrink-0 shadow-2xl">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 shrink-0 flex items-center justify-between">
+                    <span>Python 標準輸出 (Stdout)</span>
+                    <button id="btn-clear-console" class="text-slate-600 hover:text-slate-400 text-[10px]">清除</button>
+                </div>
+                <pre id="python-console" class="flex-1 overflow-y-auto font-mono text-[10px] text-slate-300 whitespace-pre-wrap select-text leading-normal">等待載入編譯虛擬機...</pre>
+            </div>
+        </div>
+
+        <!-- 右側：Vis.js 畫布與步驟播放控制器 (W: 55%) -->
+        <div class="w-[55%] flex flex-col gap-4 overflow-hidden h-full">
+            
+            <!-- 畫布區 -->
+            <div class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden relative shadow-2xl">
+                <div class="absolute top-4 left-4 z-10 flex items-center space-x-2 bg-slate-950/80 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-xl">
+                    <i data-lucide="network" class="w-4 h-4 text-indigo-400 animate-pulse"></i>
+                    <span class="text-xs font-semibold text-slate-300">動態圖形畫布</span>
+                </div>
+                
+                <!-- 畫布 Container -->
+                <div id="network-canvas" class="w-full h-full"></div>
+                
+                <!-- 漂浮圖例說明 Legend -->
+                <div class="absolute bottom-4 left-4 z-10 bg-slate-950/90 backdrop-blur border border-slate-800 p-3.5 rounded-xl shadow-2xl space-y-1.5 pointer-events-none">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">節點狀態圖例</div>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px]">
+                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-cyan-200 border border-cyan-600 rounded-full"></span><span>未造訪節點</span></div>
+                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-orange-500 border border-orange-700 rounded-full"></span><span>探索中 (Active)</span></div>
+                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-yellow-300 border border-yellow-600 rounded-full"></span><span>佇列中 (Queued)</span></div>
+                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-slate-300 border border-slate-600 rounded-full"></span><span>已確認 / 結案</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 播放控制台 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3.5 shrink-0 shadow-2xl">
+                
+                <!-- 佇列 Queue 狀態顯示 -->
+                <div class="flex items-center space-x-3 bg-slate-950 border border-slate-800/80 p-2.5 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 shrink-0 select-none">目前佇列</div>
+                    <div id="queue-container" class="flex-1 flex items-center space-x-2 overflow-x-auto min-h-[30px] font-mono text-xs">
+                        <span class="text-slate-600 italic">尚未載入執行演算法</span>
+                    </div>
+                </div>
+
+                <!-- 進步說明與日誌 -->
+                <div class="bg-slate-950 border border-slate-850/80 rounded-xl p-3 flex flex-col gap-1 min-h-[70px]">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">當前步驟說明</div>
+                    <div id="log-message" class="text-xs font-mono text-slate-300 whitespace-pre-wrap leading-relaxed">請點擊左側「執行流程並渲染」產生第一波模擬歷史。</div>
+                </div>
+
+                <!-- 播放控制按鈕面板 -->
+                <div class="flex items-center justify-between gap-4">
+                    <!-- 進度控制按鈕 -->
+                    <div class="flex items-center space-x-2">
+                        <button id="ctrl-reset" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-all" title="回到起點">
+                            <i data-lucide="rotate-ccw" class="w-4.5 h-4.5"></i>
+                        </button>
+                        <button id="ctrl-prev" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-all" title="上一步">
+                            <i data-lucide="skip-back" class="w-4.5 h-4.5"></i>
+                        </button>
+                        <button id="ctrl-play" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all font-semibold flex items-center space-x-2 text-sm shadow-md shadow-indigo-900/30" title="自動播放">
+                            <i id="ctrl-play-icon" data-lucide="play" class="w-4 h-4"></i>
+                            <span id="ctrl-play-text">自動播放</span>
+                        </button>
+                        <button id="ctrl-next" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-all" title="下一步">
+                            <i data-lucide="skip-forward" class="w-4.5 h-4.5"></i>
+                        </button>
+                    </div>
+
+                    <!-- 進度 Slider / 速度 Slider -->
+                    <div class="flex-1 flex gap-4 max-w-sm">
+                        <!-- 進度時間軸 -->
+                        <div class="flex-1 space-y-1">
+                            <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                                <span>時間軸</span>
+                                <span id="progress-indicator">0 / 0</span>
+                            </div>
+                            <input id="slider-progress" type="range" min="0" max="0" value="0" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        </div>
+
+                        <!-- 速度 -->
+                        <div class="w-28 space-y-1">
+                            <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                                <span>播放頻率</span>
+                                <span id="speed-indicator">1.000s</span>
+                            </div>
+                            <input id="slider-speed" type="range" min="5" max="1000" step="5" value="1000" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 錯誤提示 Toast Popup -->
+    <div id="toast-container" class="fixed top-6 right-6 z-50 transform translate-x-80 opacity-0 transition-all duration-300 pointer-events-none max-w-sm">
+        <div class="bg-red-950 border border-red-800 text-red-200 p-4 rounded-2xl shadow-2xl flex items-start space-x-3">
+            <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 shrink-0 mt-0.5"></i>
+            <div>
+                <h4 class="text-sm font-bold text-white">執行發生錯誤</h4>
+                <p id="toast-message" class="text-xs mt-1 font-mono text-red-300 max-h-32 overflow-y-auto whitespace-pre-wrap"></p>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // 預設要呈現在「1. 圖形定義」編輯器內的使用者 Python 程式碼
+        const defaultGraphTemplate = `import json
+import networkx as nx
+
+def generate_graph_data():
+    # 建立指定的圖形結構
+    G = nx.Graph()
+    nodes = [1, 2, 3, 4, 5, 6, 7]
+    edges = [(1, 2), (3, 2), (5, 7), (6, 7), (1, 4), (4, 5)]
+    
+    G.add_nodes_from(nodes)
+    G.add_edges_from(edges)
+
+    print("--- [階段 1] 圖形初始化 ---")
+    print(f"成功定義節點: {nodes}")
+    print(f"成功定義連線: {edges}")
+
+    # 計算靜態座標 (避免畫面亂飄)
+    pos = nx.spring_layout(G, seed=42)
+    
+    graph_data = {
+        "nodes": [
+            {
+                "id": str(n), 
+                "label": f"Node {n}",
+                "x": float(pos[n][0]) * 500,
+                "y": float(pos[n][1]) * 500
+            } for n in G.nodes()
+        ],
+        "edges": [
+            {
+                "id": f"{min(u, v)}-{max(u, v)}",  # 統一用小到大排序作為 Edge ID
+                "from": str(u), 
+                "to": str(v)
+            } for u, v in G.edges()
+        ]
+    }
+    
+    # 導出 JSON 字串，以傳送給階段 2
+    return json.dumps(graph_data)
+
+generate_graph_data()
+`;
+
+        // 預設要呈現在「2. 演算法邏輯 & 步驟錄製」編輯器內的使用者 Python 程式碼
+        const defaultAlgoTemplate = `import json
+import networkx as nx
+from collections import deque
+
+# ------------------------------------------------------------------
+# 注意：變數 'graph_input_json' 會由網頁 JS 從階段 1 的輸出中自動注入！
+# ------------------------------------------------------------------
+
+def run_bfs_and_record(input_json_str):
+    # 1. 載入並解析階段 1 產生的圖形結構
+    graph_data = json.loads(input_json_str)
+    
+    G = nx.Graph()
+    # 根據階段 1 的結構在記憶體中重建圖形
+    for node in graph_data["nodes"]:
+        G.add_node(int(node["id"]))
+    for edge in graph_data["edges"]:
+        G.add_edge(int(edge["from"]), int(edge["to"]))
+
+    print("\\n--- [階段 2] 演算法步驟錄製 ---")
+    print("已成功重建 NetworkX 圖形結構。準備執行 BFS 演算法。")
+
+    # 2. 執行 BFS 演算法並錄製步驟
+    start_node = 1
+    queue = deque([start_node])
+    visited = set()
+    queued = {start_node}
+    bfs_tree_edges = set()  # 用來記錄已經探索過且屬於 BFS 樹的邊
+    
+    steps = []
+
+    def record_step(message, active_node=None, active_edge=None):
+        """記錄當前狀態的快照"""
+        node_states = {}
+        for n in G.nodes():
+            n_str = str(n)
+            if n == active_node:
+                node_states[n_str] = "active"
+            elif n in queue:
+                node_states[n_str] = "queued"
+            elif n in visited:
+                node_states[n_str] = "visited"
+            else:
+                node_states[n_str] = "unvisited"
+
+        edge_states = {}
+        for u, v in G.edges():
+            edge_id = f"{min(u, v)}-{max(u, v)}"
+            if active_edge and edge_id == f"{min(active_edge)}-{max(active_edge)}":
+                edge_states[edge_id] = "active"
+            elif edge_id in bfs_tree_edges:
+                edge_states[edge_id] = "tree"
+            else:
+                edge_states[edge_id] = "normal"
+
+        steps.append({
+            "step_index": len(steps),
+            "message": message,
+            "queue": [str(x) for x in queue],
+            "visited": [str(x) for x in visited],
+            "node_states": node_states,
+            "edge_states": edge_states
+        })
+
+    # 【步驟 0】：初始狀態
+    record_step(f"BFS 演算法初始化。將起點 [{start_node}] 加入排隊佇列中。")
+
+    while queue:
+        current = queue.popleft()
+        queued.discard(current)
+        visited.add(current)
+        
+        # 【步驟 1】：取出當前節點
+        record_step(f"從佇列取出節點 [{current}]，標記為「處理中」。準備探索其鄰居節點。", active_node=current)
+
+        # 為了確保每次遍歷順序一致，鄰居由小到大排序
+        neighbors = sorted(list(G.neighbors(current)))
+        
+        for neighbor in neighbors:
+            edge_id = f"{min(current, neighbor)}-{max(current, neighbor)}"
+            
+            if neighbor not in visited and neighbor not in queued:
+                # 【步驟 2】：發現新鄰居，進行邊的探索與節點入隊
+                record_step(
+                    f"探索邊 {current}-{neighbor}。發現未造訪鄰居 [{neighbor}]！",
+                    active_node=current,
+                    active_edge=(current, neighbor)
+                )
+                
+                queue.append(neighbor)
+                queued.add(neighbor)
+                bfs_tree_edges.add(edge_id)
+                
+                record_step(
+                    f"已將鄰居 [{neighbor}] 加入排隊佇列，並將連線納入 BFS 搜尋樹中。",
+                    active_node=current
+                )
+            else:
+                # 【步驟 3】：遇到已經排隊或造訪過的節點
+                record_step(
+                    f"探索邊 {current}-{neighbor}。鄰居 [{neighbor}] 先前已被造訪過或已在佇列中，跳過此邊。",
+                    active_node=current,
+                    active_edge=(current, neighbor)
+                )
+
+        # 【步驟 4】：當前節點探索完畢
+        record_step(f"節點 [{current}] 的所有鄰居探索完畢。將 [{current}] 標記為「已造訪（結案）」。")
+
+    # 【步驟 5】：演算法完成
+    record_step("🎉 BFS 演算法執行完畢！所有與起點相通的節點皆已探索完成。")
+
+    # 輸出步驟 JSON 給前端 JS 渲染
+    return json.dumps(steps)
+
+# 執行演算法並傳入注入的全域變數
+run_bfs_and_record(graph_input_json)
+`;
+    </script>
+
+    <script type="text/javascript">
+        let pyodideInstance = null;
+        let currentStepsData = null;
+        let currentGraphData = null;
+        
+        let currentStepIdx = 0;
+        let isPlaying = false;
+        let playInterval = null;
+        let playSpeed = 1000; // 預設 1s
+
+        let networkInstance = null;
+        let nodesDataSet = null;
+        let edgesDataSet = null;
+
+        const consoleElem = document.getElementById('python-console');
+        const runBtn = document.getElementById('btn-run');
+        const editorGraph = document.getElementById('editor-graph');
+        const editorAlgo = document.getElementById('editor-algo');
+
+        // 將兩個編輯器預先帶入預設範本
+        editorGraph.value = defaultGraphTemplate;
+        editorAlgo.value = defaultAlgoTemplate;
+
+        // 初始化 Pyodide 與 NetworkX
+        async function initPyodide() {
+            try {
+                updateConsole("正在載入 WebAssembly 虛擬機 (Pyodide v0.26.4)...");
+                
+                pyodideInstance = await loadPyodide({
+                    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"
+                });
+
+                updateConsole("載入成功！正在載入 Python 基礎數據庫 (networkx)...");
+                
+                // 載入 NetworkX 模組
+                await pyodideInstance.loadPackage('networkx');
+                
+                updateConsole("✔ 所有引擎就緒。可以開始撰寫與執行 Python 演算法囉！");
+                
+                // 修改 UI 狀態
+                document.getElementById('status-text').innerText = "系統已就緒 (Pyodide VM)";
+                document.getElementById('status-dot').className = "w-2.5 h-2.5 bg-green-500 rounded-full";
+                
+                runBtn.disabled = false;
+                
+                // 綁定 stdout
+                pyodideInstance.setStdout({
+                    batched: (text) => {
+                        consoleElem.innerText += text + '\n';
+                        consoleElem.scrollTop = consoleElem.scrollHeight;
+                    }
+                });
+
+                // 首次自動執行一次雙階段流程
+                executePythonCode();
+                
+            } catch (error) {
+                console.error("Pyodide 載入失敗：", error);
+                updateConsole("❌ 載入失敗。請檢查您的網路連線與瀏覽器是否支援 WebAssembly。");
+                showToast("虛擬核心載入失敗！原因: " + error.message);
+                document.getElementById('status-text').innerText = "載入失敗";
+                document.getElementById('status-dot').className = "w-2.5 h-2.5 bg-red-500 rounded-full animate-none";
+            }
+        }
+
+        function updateConsole(text, clear = false) {
+            if (clear) consoleElem.innerText = "";
+            consoleElem.innerText += text + '\n';
+            consoleElem.scrollTop = consoleElem.scrollHeight;
+        }
+
+        // 顯示 Toast 錯誤
+        function showToast(message) {
+            const toast = document.getElementById('toast-container');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.innerText = message;
+            
+            toast.classList.remove('translate-x-80', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-x-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-x-80', 'opacity-0', 'pointer-events-none');
+                toast.classList.remove('translate-x-0', 'opacity-100');
+            }, 5000);
+        }
+
+        // 核心：在網頁端即時執行雙階段 Python 程式並進行傳遞與解析
+        async function executePythonCode() {
+            if (!pyodideInstance) return;
+            
+            pausePlayback();
+            updateConsole("正在執行雙階段流程編譯...", true);
+            
+            const graphPythonSource = editorGraph.value;
+            const algoPythonSource = editorAlgo.value;
+
+            try {
+                // 階段 1: 執行圖形定義 Python，取得 Graph JSON
+                updateConsole(">>> [階段 1] 正在執行圖形定義與座標計算...");
+                const rawGraphResult = await pyodideInstance.runPythonAsync(graphPythonSource);
+                
+                if (!rawGraphResult) {
+                    throw new Error("階段 1 執行完畢，但未返回任何結果！請確保最後一行呼叫了回傳 JSON 的函數。");
+                }
+
+                currentGraphData = JSON.parse(rawGraphResult);
+                updateConsole(`✔ 階段 1 完成：生成 ${currentGraphData.nodes.length} 個節點、${currentGraphData.edges.length} 條邊的結構。`);
+
+                // 注入全域變數到 Pyodide 的 Python 命名空間中，供階段 2 直接調用
+                pyodideInstance.globals.set("graph_input_json", rawGraphResult);
+
+                // 階段 2: 執行演算法步驟錄製，取得 Steps JSON
+                updateConsole("\n>>> [階段 2] 正在執行演算法流程，並將階段 1 的 JSON 注入為全域變數 'graph_input_json'...");
+                const rawStepsResult = await pyodideInstance.runPythonAsync(algoPythonSource);
+                
+                if (!rawStepsResult) {
+                    throw new Error("階段 2 執行完畢，但未返回任何結果！請確保最後一行能回傳錄製的 JSON 步驟串。");
+                }
+
+                currentStepsData = JSON.parse(rawStepsResult);
+                updateConsole(`✔ 階段 2 完成：成功錄製 ${currentStepsData.length} 個步驟。`);
+                
+                // 初始化圖形畫布與播放器設定
+                initNetworkCanvas();
+                resetPlaybackControls();
+                updateUIForStep(0);
+                
+                updateConsole("\n🎉 雙階段演算法載入與圖形渲染成功！");
+                
+            } catch (err) {
+                console.error("編譯執行出錯：", err);
+                updateConsole(`\n❌ [Runtime Error]:\n${err.message}`);
+                showToast(err.message);
+            }
+        }
+
+        // 初始化 Vis.js
+        function initNetworkCanvas() {
+            if (!currentGraphData) return;
+
+            // 轉換節點與邊為 DataSet
+            nodesDataSet = new vis.DataSet(currentGraphData.nodes.map(node => ({
+                ...node,
+                shape: 'dot',
+                size: 28,
+                color: { background: '#cbd5e1', border: '#94a3b8' },
+                font: { color: '#f1f5f9', size: 14, face: 'monospace' }
+            })));
+
+            edgesDataSet = new vis.DataSet(currentGraphData.edges.map(edge => ({
+                ...edge,
+                color: { color: '#475569' },
+                width: 2
+            })));
+
+            const data = { nodes: nodesDataSet, edges: edgesDataSet };
+            const options = {
+                physics: { enabled: false }, // 關閉物理引擎，使用算好的靜態座標以維持穩定
+                interaction: { dragNodes: true, zoomView: true, dragView: true }
+            };
+
+            networkInstance = new vis.Network(document.getElementById('network-canvas'), data, options);
+        }
+
+        // 渲染指定步驟 (Step Index) 狀態
+        function updateUIForStep(stepIdx) {
+            if (!currentStepsData || stepIdx < 0 || stepIdx >= currentStepsData.length) return;
+            currentStepIdx = stepIdx;
+
+            const step = currentStepsData[stepIdx];
+
+            // 1. 更新節點色彩樣式
+            Object.entries(step.node_states).forEach(([nodeId, state]) => {
+                let bg = '#cbd5e1';  // unvisited 預設灰色
+                let border = '#94a3b8';
+                let size = 26;
+
+                if (state === 'active') {
+                    bg = '#f97316';  // 探索中 - 橘色
+                    border = '#ea580c';
+                    size = 35;
+                } else if (state === 'queued') {
+                    bg = '#fde047';  // 佇列中 - 黃色
+                    border = '#ca8a04';
+                    size = 31;
+                } else if (state === 'visited') {
+                    bg = '#10b981';  // 已造訪 - 綠色
+                    border = '#059669';
+                }
+
+                nodesDataSet.update({ id: nodeId, color: { background: bg, border: border }, size: size });
+            });
+
+            // 2. 更新連線色彩與粗細
+            Object.entries(step.edge_states).forEach(([edgeId, state]) => {
+                let color = '#475569'; // normal 預設深灰
+                let width = 2;
+
+                if (state === 'active') {
+                    color = '#f97316'; // 橘色（探索中）
+                    width = 5;
+                } else if (state === 'tree') {
+                    color = '#10b981'; // 綠色（BFS樹）
+                    width = 4;
+                }
+
+                edgesDataSet.update({ id: edgeId, color: { color: color, highlight: color }, width: width });
+            });
+
+            // 3. 更新日誌與進度條
+            document.getElementById('log-message').innerText = step.message;
+            document.getElementById('progress-indicator').innerText = `${stepIdx + 1} / ${currentStepsData.length}`;
+            document.getElementById('slider-progress').value = stepIdx;
+
+            // 4. 更新佇列 (Queue) HTML
+            const qContainer = document.getElementById('queue-container');
+            qContainer.innerHTML = '';
+            if (step.queue.length === 0) {
+                qContainer.innerHTML = '<span class="text-slate-600 italic">空佇列 []</span>';
+            } else {
+                step.queue.forEach((n, idx) => {
+                    const el = document.createElement('div');
+                    el.className = 'px-2 py-1 bg-yellow-400 text-slate-950 font-extrabold rounded shadow border border-yellow-500 shrink-0 flex items-center space-x-1 animate-pulse';
+                    el.innerHTML = `<span>${n}</span>`;
+                    qContainer.appendChild(el);
+                    
+                    if (idx < step.queue.length - 1) {
+                        const arrow = document.createElement('span');
+                        arrow.className = 'text-slate-500 font-bold px-0.5';
+                        arrow.innerText = '←';
+                        qContainer.appendChild(arrow);
+                    }
+                });
+            }
+        }
+
+        // 播放器播放/暫停邏輯
+        function togglePlayback() {
+            if (isPlaying) {
+                pausePlayback();
+            } else {
+                startPlayback();
+            }
+        }
+
+        function startPlayback() {
+            if (!currentStepsData) return;
+            if (currentStepIdx >= currentStepsData.length - 1) {
+                currentStepIdx = 0; // 重頭播放
+            }
+            isPlaying = true;
+            document.getElementById('ctrl-play-text').innerText = '暫停';
+            document.getElementById('ctrl-play-icon').setAttribute('data-lucide', 'pause');
+            lucide.createIcons();
+
+            playInterval = setInterval(() => {
+                if (currentStepIdx < currentStepsData.length - 1) {
+                    updateUIForStep(currentStepIdx + 1);
+                } else {
+                    pausePlayback(); // 播完了自動暫停
+                }
+            }, playSpeed);
+        }
+
+        function pausePlayback() {
+            isPlaying = false;
+            clearInterval(playInterval);
+            document.getElementById('ctrl-play-text').innerText = '自動播放';
+            document.getElementById('ctrl-play-icon').setAttribute('data-lucide', 'play');
+            lucide.createIcons();
+        }
+
+        function resetPlaybackControls() {
+            if (!currentStepsData) return;
+            document.getElementById('slider-progress').max = currentStepsData.length - 1;
+            document.getElementById('slider-progress').value = 0;
+            currentStepIdx = 0;
+        }
+
+        // 綁定 UI 監聽事件
+        runBtn.addEventListener('click', executePythonCode);
+        
+        document.getElementById('btn-restore-template').addEventListener('click', () => {
+            editorGraph.value = defaultGraphTemplate;
+            editorAlgo.value = defaultAlgoTemplate;
+            updateConsole("已恢復預設雙 Python 範本。請點擊「執行兩階段流程並渲染」重新編譯。");
+        });
+
+        document.getElementById('btn-clear-console').addEventListener('click', () => {
+            consoleElem.innerText = "";
+        });
+
+        document.getElementById('ctrl-play').addEventListener('click', togglePlayback);
+        document.getElementById('ctrl-reset').addEventListener('click', () => {
+            pausePlayback();
+            updateUIForStep(0);
+        });
+        document.getElementById('ctrl-next').addEventListener('click', () => {
+            pausePlayback();
+            if (currentStepsData && currentStepIdx < currentStepsData.length - 1) {
+                updateUIForStep(currentStepIdx + 1);
+            }
+        });
+        document.getElementById('ctrl-prev').addEventListener('click', () => {
+            pausePlayback();
+            if (currentStepsData && currentStepIdx > 0) {
+                updateUIForStep(currentStepIdx - 1);
+            }
+        });
+
+        // 播放進度 Slider
+        document.getElementById('slider-progress').addEventListener('input', (e) => {
+            pausePlayback();
+            updateUIForStep(parseInt(e.target.value));
+        });
+
+        // 速度變更 Slider
+        document.getElementById('slider-speed').addEventListener('input', (e) => {
+            playSpeed = parseInt(e.target.value);
+            document.getElementById('speed-indicator').innerText = `${(playSpeed / 1000).toFixed(3)}s`;
+            if (isPlaying) {
+                pausePlayback();
+                startPlayback();
+            }
+        });
+
+        // 啟動流程
+        window.onload = () => {
+            lucide.createIcons();
+            initPyodide();
+        };
+    </script>
+</body>
+</html>

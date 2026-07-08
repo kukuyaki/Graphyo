@@ -1,25 +1,26 @@
-edge=[[1, 2, 30], [1, 5, 34], [1, 6, 42], [2, 6, 26], [3, 5, 50], [5, 6, 31], [7, 5, 14], [7, 6, 2]]
-nodes ={1, 2, 3, 5, 6, 7}
+from random import sample
+#this is a python file that generate 2 json file(graph.json and steps.json)
+#run_bfs_and_export() will return and save 2 json file 
 
+def random_graph_generator(node_c=20,edge_c=10):
+    nodes = [i+1 for i in range(node_c)]
+    edges = [tuple(sample(nodes,2)) for i in range(edge_c)]
+    return nodes,edges
 
+z = random_graph_generator()
+print(z)
 
-{'A': [-0.13670371167308884, 0.5226818685947843, 0
- 'B': [0.30032180435110034, 0.6827287625907624, 0
- 'D': [1.0, -0.05040517597682541, 0
- 'E': [-0.3048686374147606, -0.915591855674971, 0
- 'C': [-0.8661339040110789, 0.10122831429164335, 0], 
- 'F': [0.007384448747828158, -0.3406419138253942, 0]}
-[['A', 'B', 30],
- ['A', 'D', 34],
- ['A', 'E', 42],
- ['B', 'E', 26],
- ['C', 'D', 50],
- ['D', 'E', 31],
- ['F', 'D', 14],
- ['F', 'E', 2]]
-
- A1
- B2
- D5
- E6
- F7
+演算法步驟錄製失敗！Traceback (most recent call last):
+  File "/lib/python312.zip/_pyodide/_base.py", line 597, in eval_code_async
+    await CodeRunner(
+          ^^^^^^^^^^^
+  File "/lib/python312.zip/_pyodide/_base.py", line 285, in __init__
+    self.ast = next(self._gen)
+               ^^^^^^^^^^^^^^^
+  File "/lib/python312.zip/_pyodide/_base.py", line 149, in _parse_and_compile_gen
+    mod = compile(source, filename, mode, flags | ast.PyCF_ONLY_AST)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<exec>", line 19
+    print("
+          ^
+SyntaxError: unterminated string literal (detected at line 19)

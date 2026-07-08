@@ -7,4 +7,6 @@ requires-python = ">=3.14"
 dependencies = [
     "manim>=0.20.1",
     "matplotlib>=3.11.0",
+    "pandas>=3.0.3",
+    "pyvis>=0.3.2",
 ]

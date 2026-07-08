@@ -9,7 +9,9 @@ from manim import *
 import numpy as np
 from manim.utils.rate_functions import ease_out_bounce
 from early_work.show_single_graph import pos_f
+
 # uv run manim -pql nodefall.py
+
 class ExampleRotation(Scene):
     def construct(self):
         # nodes = {'A': [ 0.2665238 , -0.10578828,0],

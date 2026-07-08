@@ -1,0 +1,307 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BFS 演算法步驟播放器</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vis.js CDN -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        #network-canvas {
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+        }
+        /* 隱藏滾動條 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen w-screen flex flex-col overflow-hidden font-sans">
+
+    <!-- 頂部標題列 -->
+    <header class="bg-slate-900/80 backdrop-blur border-b border-slate-800 px-6 py-4 flex justify-between items-center shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="p-2 bg-blue-600 rounded-lg text-white">
+                <i data-lucide="network" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white">BFS 廣度優先搜尋</h1>
+                <p class="text-xs text-slate-400">使用 JSON 驅動的步進視覺化播放器</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <!-- 自動播放狀態標籤 -->
+            <div id="play-status-badge" class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-full text-xs">
+                <span class="w-2 h-2 bg-amber-500 rounded-full animate-ping"></span>
+                <span id="play-status-text" class="text-slate-300 font-medium">載入中...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主顯示區域 -->
+    <main class="flex-1 flex overflow-hidden">
+        <!-- 左邊：圖形畫布 -->
+        <div class="flex-1 relative h-full">
+            <div id="network-canvas" class="w-full h-full"></div>
+            
+            <!-- 圖例 Legend -->
+            <div class="absolute bottom-6 left-6 bg-slate-900/95 border border-slate-800/80 p-4 rounded-xl shadow-2xl space-y-2 pointer-events-none">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">節點與邊狀態圖例</div>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                    <div class="flex items-center space-x-2"><span class="w-3 h-3 bg-slate-400 border border-slate-600 rounded-full"></span><span>未造訪 (Unvisited)</span></div>
+                    <div class="flex items-center space-x-2"><span class="w-3 h-3 bg-amber-500 border border-amber-700 rounded-full"></span><span>處理中 (Active)</span></div>
+                    <div class="flex items-center space-x-2"><span class="w-3 h-3 bg-yellow-300 border border-yellow-600 rounded-full"></span><span>佇列中 (Queued)</span></div>
+                    <div class="flex items-center space-x-2"><span class="w-3 h-3 bg-emerald-500 border border-emerald-700 rounded-full"></span><span>已造訪 (Visited)</span></div>
+                    <div class="flex items-center space-x-2"><span class="w-6 h-1 bg-amber-500 rounded"></span><span>探索中 (Exploring Edge)</span></div>
+                    <div class="flex items-center space-x-2"><span class="w-6 h-1 bg-emerald-500 rounded"></span><span>搜尋樹 (BFS Tree)</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右邊：日誌、佇列與控制台 -->
+        <div class="w-96 bg-slate-900 border-l border-slate-800 flex flex-col shrink-0 h-full">
+            <!-- 播放控制區 -->
+            <div class="p-6 border-b border-slate-800 space-y-4">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-400">動態播放控制</div>
+                <div class="flex items-center space-x-3">
+                    <button id="btn-toggle" class="flex-1 flex items-center justify-center space-x-2 py-3 bg-blue-600 hover:bg-blue-500 active:scale-98 transition-all text-white font-medium rounded-lg shadow-lg shadow-blue-900/20">
+                        <i id="btn-icon" data-lucide="play" class="w-5 h-5"></i>
+                        <span id="btn-text">自動播放 (每秒 1 步)</span>
+                    </button>
+                    <button id="btn-reset" class="p-3 bg-slate-800 hover:bg-slate-700 active:scale-98 transition-all rounded-lg text-slate-300" title="重頭播放">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 演算法執行狀態面板 -->
+            <div class="flex-1 p-6 flex flex-col space-y-6 overflow-hidden">
+                <!-- 佇列 Queue 狀態 -->
+                <div class="space-y-2 shrink-0">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400">目前佇列 (Queue)</div>
+                    <div id="queue-container" class="flex items-center space-x-2 bg-slate-950 border border-slate-800 p-3 rounded-lg overflow-x-auto min-h-[48px] font-mono text-sm">
+                        <!-- Queue 元素會動態被加入這裡 -->
+                    </div>
+                </div>
+
+                <!-- 執行詳細說明 -->
+                <div class="flex-1 flex flex-col overflow-hidden space-y-2">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400">執行步驟說明</div>
+                    <div class="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-4 overflow-y-auto font-mono text-sm text-emerald-400 flex flex-col justify-between">
+                        <div id="log-message" class="whitespace-pre-wrap leading-relaxed">準備載入演算法步驟中...</div>
+                        <div class="border-t border-slate-900 mt-4 pt-4 text-xs text-slate-500 flex justify-between items-center shrink-0 font-sans">
+                            <span>資料來源：steps.json</span>
+                            <span id="step-indicator">STEP: 0 / 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="text/javascript">
+        let graphData = null;
+        let stepsData = null;
+        let currentStepIdx = 0;
+        
+        let network = null;
+        let nodesDataSet = null;
+        let edgesDataSet = null;
+        
+        let playInterval = null;
+        let isPlaying = false;
+
+        const container = document.getElementById('network-canvas');
+
+        // 啟動流程：同步讀取兩個 JSON
+        async function loadAndInit() {
+            try {
+                // 讀取 graph.json
+                const graphRes = await fetch('./vis/graph.json');
+                graphData = await graphRes.json();
+
+                // 讀取 steps.json
+                const stepsRes = await fetch('./vis/steps.json');
+                stepsData = await stepsRes.json();
+
+                document.getElementById('play-status-text').innerText = '準備就緒';
+                document.getElementById('play-status-badge').querySelector('span').className = 'w-2 h-2 bg-green-500 rounded-full';
+
+                initNetwork();
+            } catch (error) {
+                console.error("載入 JSON 發生錯誤：", error);
+                document.getElementById('log-message').innerHTML = `<span class="text-red-500">❌ 載入資料失敗！<br>請確認是否已在終端機執行 python bfs_generator.py，且在本地伺服器（例如 python -m http.server）下開啟本網頁。</span>`;
+                document.getElementById('play-status-text').innerText = '載入失敗';
+                document.getElementById('play-status-badge').querySelector('span').className = 'w-2 h-2 bg-red-500 rounded-full';
+            }
+        }
+
+        // 初始化 Vis.js 網頁畫布
+        function initNetwork() {
+            // 將基本圖形結構轉換成 vis-network 的 DataSet
+            nodesDataSet = new vis.DataSet(graphData.nodes.map(node => ({
+                ...node,
+                shape: 'dot',
+                size: 28,
+                color: { background: '#cbd5e1', border: '#94a3b8' }, // 初始灰色
+                font: { color: '#f1f5f9', size: 14, face: 'monospace' }
+            })));
+
+            edgesDataSet = new vis.DataSet(graphData.edges.map(edge => ({
+                ...edge,
+                color: { color: '#475569' }, // 初始深灰色
+                width: 2
+            })));
+
+            const data = { nodes: nodesDataSet, edges: edgesDataSet };
+            const options = {
+                physics: { enabled: false }, // 關閉物理引擎，使用算好的靜態座標
+                interaction: { dragNodes: true, zoomView: true, dragView: true }
+            };
+
+            network = new vis.Network(container, data, options);
+            
+            // 繪製初始第 0 步
+            updateUI(0);
+            lucide.createIcons();
+            
+            // 預設開啟自動播放
+            togglePlay();
+        }
+
+        // 渲染指定的步驟 (動態修改畫布與控制台 UI)
+        function updateUI(stepIdx) {
+            if (!stepsData || stepIdx < 0 || stepIdx >= stepsData.length) return;
+            currentStepIdx = stepIdx;
+
+            const step = stepsData[stepIdx];
+
+            // 1. 更新節點顏色
+            Object.entries(step.node_states).forEach(([nodeId, state]) => {
+                let bg = '#cbd5e1';  // unvisited 預設灰色
+                let border = '#94a3b8';
+                let size = 28;
+
+                if (state === 'active') {
+                    bg = '#f97316';  // 橘色
+                    border = '#ea580c';
+                    size = 36;       // 放大處理中節點
+                } else if (state === 'queued') {
+                    bg = '#fde047';  // 黃色
+                    border = '#ca8a04';
+                    size = 32;
+                } else if (state === 'visited') {
+                    bg = '#10b981';  // 綠色
+                    border = '#059669';
+                }
+
+                nodesDataSet.update({ id: nodeId, color: { background: bg, border: border }, size: size });
+            });
+
+            // 2. 更新邊的顏色與粗細
+            Object.entries(step.edge_states).forEach(([edgeId, state]) => {
+                let color = '#475569'; // normal 預設深灰
+                let width = 2;
+
+                if (state === 'active') {
+                    color = '#f97316'; // 橘色（探索中）
+                    width = 5;
+                } else if (state === 'tree') {
+                    color = '#10b981'; // 綠色（BFS樹）
+                    width = 4;
+                }
+
+                edgesDataSet.update({ id: edgeId, color: { color: color, highlight: color }, width: width });
+            });
+
+            // 3. 更新日誌與進度文字
+            document.getElementById('log-message').innerText = step.message;
+            document.getElementById('step-indicator').innerText = `STEP: ${stepIdx + 1} / ${stepsData.length}`;
+
+            // 4. 更新佇列 (Queue) HTML 呈現
+            const qContainer = document.getElementById('queue-container');
+            qContainer.innerHTML = '';
+            if (step.queue.length === 0) {
+                qContainer.innerHTML = '<span class="text-slate-600 italic text-xs">空佇列 []</span>';
+            } else {
+                step.queue.forEach((n, idx) => {
+                    const el = document.createElement('div');
+                    el.className = 'px-2 py-1 bg-yellow-400 text-slate-950 font-bold rounded shadow-md border border-yellow-500 shrink-0 text-xs flex items-center space-x-1 animate-pulse';
+                    el.innerHTML = `<span>Node ${n}</span>`;
+                    qContainer.appendChild(el);
+                    
+                    if (idx < step.queue.length - 1) {
+                        const arrow = document.createElement('span');
+                        arrow.className = 'text-slate-500 font-bold px-1';
+                        arrow.innerText = '←';
+                        qContainer.appendChild(arrow);
+                    }
+                });
+            }
+        }
+
+        // 自動播放/暫停邏輯
+        function togglePlay() {
+            if (isPlaying) {
+                pause();
+            } else {
+                play();
+            }
+        }
+
+        function play() {
+            if (currentStepIdx >= stepsData.length - 1) {
+                currentStepIdx = 0; // 若播放到底了，點播放會重頭開始
+            }
+            isPlaying = true;
+            document.getElementById('btn-text').innerText = '暫停播放';
+            document.getElementById('btn-icon').setAttribute('data-lucide', 'pause');
+            
+            document.getElementById('play-status-text').innerText = '自動播放中';
+            document.getElementById('play-status-badge').querySelector('span').className = 'w-2 h-2 bg-blue-500 rounded-full animate-ping';
+            lucide.createIcons();
+
+            playInterval = setInterval(() => {
+                if (currentStepIdx < stepsData.length - 1) {
+                    updateUI(currentStepIdx + 1);
+                } else {
+                    pause(); // 播完了自動暫停
+                }
+            }, 1000); // 每一秒（1000ms）更新一次
+        }
+
+        function pause() {
+            isPlaying = false;
+            clearInterval(playInterval);
+            document.getElementById('btn-text').innerText = '自動播放 (每秒 1 步)';
+            document.getElementById('btn-icon').setAttribute('data-lucide', 'play');
+            
+            document.getElementById('play-status-text').innerText = '已暫停';
+            document.getElementById('play-status-badge').querySelector('span').className = 'w-2 h-2 bg-slate-500 rounded-full';
+            lucide.createIcons();
+        }
+
+        // 綁定控制按鈕事件
+        document.getElementById('btn-toggle').addEventListener('click', togglePlay);
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            pause();
+            updateUI(0);
+        });
+
+        // 頁面加載完成
+        window.onload = loadAndInit;
+    </script>
+</body>
+</html>
