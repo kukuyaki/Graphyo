@@ -103,9 +103,17 @@
                         <i data-lucide="copy" class="w-4 h-4"></i>
                         <span>複製圖形 JSON</span>
                     </button>
+                    <button id="btn-import-graph-trigger" class="flex-1 flex items-center justify-center py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-all text-[10px]">
+                            <i data-lucide="upload" class="w-4 h-4"></i> 
+                            <span>圖形 JSON匯入</span>
+                        </button>
                     <button id="btn-copy-steps" disabled class="flex-1 flex items-center justify-center space-x-1.5 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-all text-xs">
                         <i data-lucide="copy" class="w-4 h-4"></i>
                         <span>複製步驟 JSON</span>
+                    </button>
+                    <button id="btn-import-steps-trigger" class="flex-1 flex items-center justify-center py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-all text-[10px]">
+                            <i data-lucide="upload" class="w-4 h-4"></i> 
+                            <span>步驟 JSON匯入</span>
                     </button>
                 </div>
             </div>
@@ -524,7 +532,40 @@ run_dfs_and_record(graph_input_json)
                 document.getElementById('status-dot').className = "w-2.5 h-2.5 bg-red-500 rounded-full animate-none";
             }
         }
+        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        // --- 新增：匯出與匯入功能 ---
+        // function downloadJson(filename, content) {
+        //     const blob = new Blob([content], { type: 'application/json' });
+        //     const url = URL.createObjectURL(blob);
+        //     const a = document.createElement('a');
+        //     a.href = url;
+        //     a.download = filename;
+        //     a.click();
+        //     URL.revokeObjectURL(url);
+        // }
 
+        // function handleFileImport(event, callback) {
+        //     const file = event.target.files[0];
+        //     if (!file) return;
+        //     const reader = new FileReader();
+        //     reader.onload = (e) => callback(e.target.result);
+        //     reader.readAsText(file);
+        // }
+
+        // document.getElementById('btn-export-graph').addEventListener('click', () => downloadJson('graph.json', rawGraphResult));
+        // document.getElementById('btn-import-graph-trigger').addEventListener('click', () => document.getElementById('input-file-graph').click());
+        // document.getElementById('input-file-graph').addEventListener('change', (e) => handleFileImport(e, (content) => { editorGraph.value = content; updateConsole("✔ 已匯入圖形定義檔案。"); }));
+
+        // document.getElementById('btn-export-steps').addEventListener('click', () => downloadJson('steps.json', rawStepsResult));
+        // document.getElementById('btn-import-steps-trigger').addEventListener('click', () => document.getElementById('input-file-steps').click());
+        // document.getElementById('input-file-steps').addEventListener('change', (e) => handleFileImport(e, (content) => { 
+        //     currentStepsData = JSON.parse(content); 
+        //     rawStepsResult = content; 
+        //     resetPlaybackControls(); 
+        //     updateUIForStep(0);
+        //     updateConsole("✔ 已匯入演算法步驟 JSON。"); 
+        // }));
+        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         function updateConsole(text, clear = false) {
             if (clear) consoleElem.innerText = "";
             consoleElem.innerText += text + '\n';
