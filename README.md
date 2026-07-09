@@ -1,6 +1,9 @@
 # Graphyo
+
+try it out!! <br>
+https://kukuyaki.github.io/Graphyo/vis/final_d.html
+
 ```
-try it out!! https://kukuyaki.github.io/Graphyo/vis/final_d.html
 A Python tool for learning and exploring Graph Algorithms.
 Designed for students studying algorithms class, 
 Graphyo helps visualize and understand core concepts like Bellman-Ford, BFS, and more.
