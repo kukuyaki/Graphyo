@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>端雙階段 Python 演算法沙盒</title>
+    <title>雙階段 Python 演算法沙盒</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Vis.js CDN -->
@@ -43,7 +43,21 @@
                 <p class="text-xs text-slate-400">階段1生成地圖資料 ➔ 階段2錄製演算法 steps</p>
             </div>
         </div>
-        
+        <!-- //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        <div class = "flex gap-2">
+            <div  class="flex items-center space-x-2.5 bg-slate-800 px-4 py-2 rounded-full text-xs">
+                <span  class="text-slate-300 font-medium">起點</span>
+                <span  class="text-slate-300 font-medium">5</span>
+            </div>
+            <div  class="flex items-center space-x-2.5 bg-slate-800 px-4 py-2 rounded-full text-xs">
+                <span  class="text-slate-300 font-medium">終點</span>
+                <span  class="text-slate-300 font-medium">7</span>
+            </div>
+        </div>
+        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA -->
+
+
+
         <!-- Pyodide 載入狀態標籤 -->
         <div id="pyodide-status" class="flex items-center space-x-2.5 bg-slate-800 px-4 py-2 rounded-full text-xs">
             <span id="status-dot" class="w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping"></span>
@@ -152,6 +166,18 @@
                         <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-slate-300 border border-slate-600 rounded-full"></span><span>已確認 / 結案</span></div>
                     </div>
                 </div>
+                <!-- //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa
+                <div class="absolute bottom-4 right-4 z-10 bg-slate-950/90 backdrop-blur border border-slate-800 p-3.5 rounded-xl shadow-2xl space-y-1.5 pointer-events-none">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Y/N</div>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px]">
+                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>迴圈</span></div>
+                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>一筆畫</span></div>
+                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>強連通</span></div>
+                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>平面圖</span></div>
+                    </div>
+                </div>
+                //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa -->
+
             </div>
 
             <!-- 播放控制台 -->
