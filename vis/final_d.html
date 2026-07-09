@@ -43,18 +43,18 @@
                 <p class="text-xs text-slate-400">階段1生成地圖資料 ➔ 階段2錄製演算法 steps</p>
             </div>
         </div>
-        <!-- //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        <!-- //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25 -->
         <div class = "flex gap-2">
             <div  class="flex items-center space-x-2.5 bg-slate-800 px-4 py-2 rounded-full text-xs">
                 <span  class="text-slate-300 font-medium">起點</span>
-                <span  class="text-slate-300 font-medium">5</span>
+                <span id='start_node' class="text-slate-300 font-medium"></span>
             </div>
             <div  class="flex items-center space-x-2.5 bg-slate-800 px-4 py-2 rounded-full text-xs">
                 <span  class="text-slate-300 font-medium">終點</span>
-                <span  class="text-slate-300 font-medium">7</span>
+                <span id='end_node' class="text-slate-300 font-medium"></span>
             </div>
         </div>
-        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA -->
+        <!-- //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25 -->
 
 
 
@@ -166,17 +166,17 @@
                         <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-slate-300 border border-slate-600 rounded-full"></span><span>已確認 / 結案</span></div>
                     </div>
                 </div>
-                <!-- //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa
+                //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
                 <div class="absolute bottom-4 right-4 z-10 bg-slate-950/90 backdrop-blur border border-slate-800 p-3.5 rounded-xl shadow-2xl space-y-1.5 pointer-events-none">
                     <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Y/N</div>
                     <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px]">
-                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>迴圈</span></div>
-                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>一筆畫</span></div>
-                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>強連通</span></div>
-                        <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>平面圖</span></div>
+                        <div  class="flex items-center space-x-2"><span id="cycle_check" class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>迴圈</span></div>
+                        <div  class="flex items-center space-x-2"><span id="euler_check" class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>一筆畫</span></div>
+                        <div  class="flex items-center space-x-2"><span id="strong_check" class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>強連通</span></div>
+                        <div  class="flex items-center space-x-2"><span id="planar_check" class="w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full"></span><span>平面圖</span></div>
                     </div>
                 </div>
-                //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa -->
+                //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
 
             </div>
 
@@ -511,10 +511,10 @@ run_dfs_and_record(graph_input_json)
         const copyBtnSteps = document.getElementById('btn-copy-steps');
         const editorGraph = document.getElementById('editor-graph');
         const editorAlgo = document.getElementById('editor-algo');
-        // //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-        // const importBtnGraph = document.getElementById("btn-import-graph-trigger");
-        // const importBtnAlgo = document.getElementById("btn-import-steps-trigger");
-        // //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
+        const importBtnGraph = document.getElementById("btn-import-graph-trigger");
+        const importBtnAlgo = document.getElementById("btn-import-steps-trigger");
+        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
 
 
         // 將兩個編輯器預先帶入預設範本
@@ -563,7 +563,7 @@ run_dfs_and_record(graph_input_json)
                 document.getElementById('status-dot').className = "w-2.5 h-2.5 bg-red-500 rounded-full animate-none";
             }
         }
-        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
         // --- 新增：匯出與匯入功能 ---
         // function downloadJson(filename, content) {
         //     const blob = new Blob([content], { type: 'application/json' });
@@ -596,7 +596,7 @@ run_dfs_and_record(graph_input_json)
         //     updateUIForStep(0);
         //     updateConsole("✔ 已匯入演算法步驟 JSON。"); 
         // }));
-        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
         function updateConsole(text, clear = false) {
             if (clear) consoleElem.innerText = "";
             consoleElem.innerText += text + '\n';
@@ -764,6 +764,12 @@ run_dfs_and_record(graph_input_json)
         /* STREAMING_CHUNK: Configuring optimized vis-network rendering parameters... */
         function initNetworkCanvas() {
             if (!currentGraphData) return;
+            //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
+
+            document.getElementById('planar_check').className = "w-2.5 h-2.5 bg-white border border-gray-600 rounded-full";
+            document.getElementById('end_node').innerText = "500";
+                
+            // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
 
             // 轉換節點與邊為 DataSet
             nodesDataSet = new vis.DataSet(currentGraphData.nodes.map(node => ({
