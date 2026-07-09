@@ -24,4 +24,4 @@ Best,<br>
 
 website showcase
 
-![image](https://github.com/kukuyaki/Graphyo/blob/main/image.png)
+![image](./image.png)
