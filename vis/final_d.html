@@ -348,7 +348,7 @@ generate_graph_data(30,30)
 import networkx as nx
 
 
-def run_dfs_and_record(input_json_str):
+def run_dfs_and_record(input_json_str,start_node_a=0):
     # 1. 載入並解析階段 1 產生的圖形結構
     graph_data = json.loads(input_json_str)
     
@@ -363,7 +363,10 @@ def run_dfs_and_record(input_json_str):
     print("已成功重建 NetworkX 圖形結構。準備執行 DFS 遞迴演算法。")
 
     # 2. 確保起點存在（優先選擇節點 1，若無則選擇編號最小的點）
-    start_node = 1 if 1 in G.nodes() else sorted(list(G.nodes()))[0]
+    if start_node_a:
+        start_node = int(start_node_a)
+    else:
+        start_node = 1 if 1 in G.nodes() else sorted(list(G.nodes()))[0]
     
     visited = set()
     call_stack = []          # 模擬遞迴呼叫堆疊，對應前端播放器的佇列 (Queue) 顯示
@@ -481,7 +484,7 @@ def run_dfs_and_record(input_json_str):
     return json.dumps(steps)
 
 # 執行 DFS 演算法並傳入注入的全域變數
-run_dfs_and_record(graph_input_json)
+run_dfs_and_record(graph_input_json,start_node)
 `;
     
         const ynCheck = `import collections
@@ -590,6 +593,10 @@ ynChecktest(graph_input_json)`
         const editorAlgo = document.getElementById('editor-algo');
         
 
+        let selectionState = {
+            start_node: null,
+            end_node: null
+        };
 
         // 將兩個編輯器預先帶入預設範本
         editorGraph.value = defaultGraphTemplate;
@@ -777,6 +784,7 @@ ynChecktest(graph_input_json)`
             try {
                 // 確保全域變數依然被注入
                 pyodideInstance.globals.set("graph_input_json", rawGraphResult);
+                pyodideInstance.globals.set("start_node", selectionState.start_node);
 
                 rawStepsResult = await pyodideInstance.runPythonAsync(algoPythonSource);
                 
@@ -871,6 +879,32 @@ ynChecktest(graph_input_json)`
             };
 
             networkInstance = new vis.Network(document.getElementById('network-canvas'), data, options);
+            //AAAAAAAAAAAAAAAAAAAAA25
+            networkInstance.on("click", function (params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0]; // 取得第一個選取的節點ID
+
+                // 輪流切換：先選 start，再選 end，第三次重置
+                if (!selectionState.start_node || (selectionState.start_node && selectionState.end_node)) {
+                    // 重置並設定起點
+                    selectionState.start_node = nodeId;
+                    selectionState.end_node = null;
+                } else {
+                    // 設定終點
+                    if (nodeId !== selectionState.start_node) {
+                        selectionState.end_node = nodeId;
+                    }
+                }
+
+                // 更新 UI 顯示
+                document.getElementById('start_node').innerText = selectionState.start_node || "";
+                document.getElementById('end_node').innerText = selectionState.end_node || "";
+                
+                console.log("當前選擇:", selectionState);
+            }
+            //AAAAAAAAAAAAAAAAAAAAA25
+
+        });
         }
 
         // ==========================================
