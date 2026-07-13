@@ -873,6 +873,13 @@ ynChecktest(graph_input_json)`
             const options = {
                 physics: { enabled: false }, // 關閉物理引擎，使用算好的靜態座標以維持穩定
                 edges: {
+                    arrows: {
+                        to: {
+                            enabled: false,    // 啟用箭頭
+                            scaleFactor: 1,   // 箭頭大小縮放比例
+                            type: 'arrow'     // 箭頭類型：'arrow', 'circle', 'bar'
+                        }
+                    },
                     smooth: {
                         enabled: false // ⭐ 【關鍵優化 1】將平滑曲線改為直線，渲染速度直接提升 10 倍！
                     }
