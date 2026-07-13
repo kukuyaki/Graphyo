@@ -483,6 +483,11 @@ def run_dfs_and_record(input_json_str):
 # 執行 DFS 演算法並傳入注入的全域變數
 run_dfs_and_record(graph_input_json)
 `;
+    
+        const ynCheck = `def ynChecktest():
+    return [1,1,0,0]
+
+ynChecktest()`
     </script>
 
     <!-- STREAMING_CHUNK: Setting up Pyodide compiler controller and helper methods... -->
@@ -494,6 +499,8 @@ run_dfs_and_record(graph_input_json)
         // 用於儲存與複製的原始 JSON 字串快取
         let rawGraphResult = "";
         let rawStepsResult = "";
+
+        let ynResult = []
         
         let currentStepIdx = 0;
         let isPlaying = false;
@@ -511,10 +518,7 @@ run_dfs_and_record(graph_input_json)
         const copyBtnSteps = document.getElementById('btn-copy-steps');
         const editorGraph = document.getElementById('editor-graph');
         const editorAlgo = document.getElementById('editor-algo');
-        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
-        const importBtnGraph = document.getElementById("btn-import-graph-trigger");
-        const importBtnAlgo = document.getElementById("btn-import-steps-trigger");
-        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
+        
 
 
         // 將兩個編輯器預先帶入預設範本
@@ -563,40 +567,7 @@ run_dfs_and_record(graph_input_json)
                 document.getElementById('status-dot').className = "w-2.5 h-2.5 bg-red-500 rounded-full animate-none";
             }
         }
-        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
-        // --- 新增：匯出與匯入功能 ---
-        // function downloadJson(filename, content) {
-        //     const blob = new Blob([content], { type: 'application/json' });
-        //     const url = URL.createObjectURL(blob);
-        //     const a = document.createElement('a');
-        //     a.href = url;
-        //     a.download = filename;
-        //     a.click();
-        //     URL.revokeObjectURL(url);
-        // }
-
-        // function handleFileImport(event, callback) {
-        //     const file = event.target.files[0];
-        //     if (!file) return;
-        //     const reader = new FileReader();
-        //     reader.onload = (e) => callback(e.target.result);
-        //     reader.readAsText(file);
-        // }
-
-        // document.getElementById('btn-export-graph').addEventListener('click', () => downloadJson('graph.json', rawGraphResult));
-        // document.getElementById('btn-import-graph-trigger').addEventListener('click', () => document.getElementById('input-file-graph').click());
-        // document.getElementById('input-file-graph').addEventListener('change', (e) => handleFileImport(e, (content) => { editorGraph.value = content; updateConsole("✔ 已匯入圖形定義檔案。"); }));
-
-        // document.getElementById('btn-export-steps').addEventListener('click', () => downloadJson('steps.json', rawStepsResult));
-        // document.getElementById('btn-import-steps-trigger').addEventListener('click', () => document.getElementById('input-file-steps').click());
-        // document.getElementById('input-file-steps').addEventListener('change', (e) => handleFileImport(e, (content) => { 
-        //     currentStepsData = JSON.parse(content); 
-        //     rawStepsResult = content; 
-        //     resetPlaybackControls(); 
-        //     updateUIForStep(0);
-        //     updateConsole("✔ 已匯入演算法步驟 JSON。"); 
-        // }));
-        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
+        
         function updateConsole(text, clear = false) {
             if (clear) consoleElem.innerText = "";
             consoleElem.innerText += text + '\n';
@@ -699,6 +670,7 @@ run_dfs_and_record(graph_input_json)
                 copyBtnGraph.disabled = false;
 
                 // 即時初始化與更新 Canvas
+                await yncheckupdate()
                 initNetworkCanvas();
                 
                 // 圖形更新時，重置尚未重新錄製的演算法狀態，以防節點對不上
@@ -711,6 +683,7 @@ run_dfs_and_record(graph_input_json)
                 document.getElementById('log-message').innerText = "圖形定義成功編譯！底層 Canvas 座標已更新。請點擊「2. 執行並錄製步驟」加載對應的演算法流程。";
 
                 updateConsole("\n🎉 圖形更新並初始化完畢！已在 WebAssembly 環境自動注入變數 'graph_input_json'。");
+
                 
             } catch (err) {
                 console.error("圖形生成階段錯誤：", err);
@@ -762,11 +735,35 @@ run_dfs_and_record(graph_input_json)
         // 【第一優化區塊】：優化後的網頁畫布初始化函數
         // ==========================================
         /* STREAMING_CHUNK: Configuring optimized vis-network rendering parameters... */
+        async function yncheckupdate(){
+            try{
+                const nySourece = ynCheck;
+                ynResult = await pyodideInstance.runPythonAsync(nySourece);
+                updateConsole(`✔ ynResultAAA: ${ynResult} `);
+            }
+            catch (err) {
+                console.error("演算法步驟錄製階段錯誤：", err);
+                updateConsole(`\n❌ [Runtime Error - Stage 2]:\n${err.message}`);
+                showToast("演算法步驟錄製失敗！" + err.message);
+            }
+            
+        }
         function initNetworkCanvas() {
             if (!currentGraphData) return;
             //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
-
-            document.getElementById('planar_check').className = "w-2.5 h-2.5 bg-white border border-gray-600 rounded-full";
+            checkList = ynResult
+            if (checkList[0]){document.getElementById('cycle_check').className = "w-2.5 h-2.5 bg-white border border-gray-600 rounded-full";}
+                        else{document.getElementById('cycle_check').className = "w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full";}
+            if (checkList[1]){document.getElementById('euler_check').className = "w-2.5 h-2.5 bg-white border border-gray-600 rounded-full";}
+                        else{document.getElementById('euler_check').className = "w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full";}
+            if (checkList[2]){document.getElementById('strong_check').className = "w-2.5 h-2.5 bg-white border border-gray-600 rounded-full";}
+                        else{document.getElementById('strong_check').className = "w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full";}
+            if (checkList[3]){document.getElementById('planar_check').className = "w-2.5 h-2.5 bg-white border border-gray-600 rounded-full";}
+                        else{document.getElementById('planar_check').className = "w-2.5 h-2.5 bg-white-500 border border-gray-600 rounded-full";}
+            updateConsole(`✔ checkList[0]: ${checkList[0]} `);
+            updateConsole(`✔ checkList[0]: ${checkList[1]} `);
+            updateConsole(`✔ checkList[0]: ${checkList[2]} `);
+            updateConsole(`✔ checkList[0]: ${checkList[3]} `);
             document.getElementById('end_node').innerText = "500";
                 
             // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
@@ -917,7 +914,111 @@ run_dfs_and_record(graph_input_json)
             document.getElementById('ctrl-play-icon').setAttribute('data-lucide', 'play');
             lucide.createIcons();
         }
+        async function importGraphjson(){
+            const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.json';
 
+                fileInput.onchange = async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = async (e) => { 
+                        try {
+                            // 2. 讀取並解析
+                            rawGraphResult = e.target.result;
+                            currentGraphData = JSON.parse(rawGraphResult);
+                            // 3. 同步到 Pyodide 環境 (供後續階段 2 使用)
+                            pyodideInstance.globals.set("graph_input_json", rawGraphResult);
+                            
+
+                            // 4. 重置 UI 狀態 (與 executeGraphCode 的邏輯同步)
+                            updateConsole(">>> 成功從本地匯入圖形 JSON。");
+                            updateConsole(`✔ 匯入成功：節點 ${currentGraphData.nodes.length} 個、邊 ${currentGraphData.edges.length} 條。`);
+
+                            runBtnAlgo.disabled = false;
+                            copyBtnGraph.disabled = false;
+
+                            // 5. 更新視覺與後續流程
+                            await yncheckupdate()
+                            initNetworkCanvas();
+                            
+                            currentStepsData = null;
+                            rawStepsResult = "";
+                            copyBtnSteps.disabled = true;
+                            resetPlaybackControls();
+
+                            document.getElementById('queue-container').innerHTML = '<span class="text-slate-600 italic">圖形已從檔案更新，請點擊「2. 執行並錄製步驟」來渲染演算法。</span>';
+                            document.getElementById('log-message').innerText = "圖形匯入成功！底層 Canvas 座標已更新。";
+
+                        } catch (err) {
+                            console.error("JSON 匯入錯誤：", err);
+                            updateConsole(`\n❌ [Import Error]:\n檔案格式無效 - ${err.message}`);
+                            alert("無法解析 JSON 檔案，請確認格式是否正確。");
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+
+                fileInput.click();
+                
+        }
+        function importAlgojson(){
+                const fileInputA = document.createElement('input');
+                fileInputA.type = 'file';
+                fileInputA.accept = '.json';
+
+                fileInputA.onchange = (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            if (!pyodideInstance) return;
+                            if (!currentGraphData || !rawGraphResult) {
+                                showToast("尚未生成圖形！請先點選「1. 執行並生成圖形」");
+                                return;
+                            }
+                            pausePlayback();
+                            updateConsole("\n>>> [階段 2] 正在編譯執行演算法並錄製狀態幀...");
+
+
+
+                            // 2. 讀取並解析
+                            const rawStepsResult = e.target.result;
+                            currentAlgoData = JSON.parse(rawStepsResult);
+                            // 3. 同步到 Pyodide 環境 (供後續階段 2 使用)
+                            pyodideInstance.globals.set("Algo_input_json", rawStepsResult);
+                            
+                
+                            if (!rawStepsResult) {
+                                throw new Error("階段 2 錄製完畢但回傳為空！請確認範本最後一行正常呼叫了回傳步驟 JSON 的函數。");
+                            }
+
+                            currentStepsData = JSON.parse(rawStepsResult);
+                            updateConsole(`✔ 階段 2 成功完成：成功捕獲 ${currentStepsData.length} 幀演算法步驟快照。`);
+                            
+                            copyBtnSteps.disabled = false;
+
+                            resetPlaybackControls();
+                            updateUIForStep(0);
+                            
+                            updateConsole("\n🎉 演算法錄製完成！已將最新步驟數據流加載至下方播放器，請點擊「自動播放」或「下一步」觀察。");
+                            
+
+                        } catch (err) {
+                            console.error("JSON 匯入錯誤：", err);
+                            updateConsole(`\n❌ [Import Error]:\n檔案格式無效 - ${err.message}`);
+                            alert("無法解析 JSON 檔案，請確認格式是否正確。");
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+
+                fileInputA.click();
+        }
         function resetPlaybackControls() {
             if (!currentStepsData) {
                 document.getElementById('slider-progress').max = 0;
@@ -946,14 +1047,15 @@ run_dfs_and_record(graph_input_json)
         document.getElementById('btn-clear-console').addEventListener('click', () => {
             consoleElem.innerText = "";
         });
-        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
-        // document.getElementById("btn-import-graph-trigger").addEventListener('click', () => {
-        //     consoleElem.innerText = "";
-        // });
-        // document.getElementById("btn-import-steps-trigger").addEventListener('click', () => {
-        //     consoleElem.innerText = "";
-        // });
-        //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA25
+        //AAAAAAAAAAAAAA25
+        document.getElementById("btn-import-graph-trigger").addEventListener('click', () => {
+            importGraphjson()
+        });
+        document.getElementById("btn-import-steps-trigger").addEventListener('click', () => {
+            importAlgojson()
+        });
+        //AAAAAAAAAAAAAA25
+        
         document.getElementById('ctrl-play').addEventListener('click', togglePlayback);
         document.getElementById('ctrl-reset').addEventListener('click', () => {
             pausePlayback();
