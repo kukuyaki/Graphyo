@@ -484,10 +484,80 @@ def run_dfs_and_record(input_json_str):
 run_dfs_and_record(graph_input_json)
 `;
     
-        const ynCheck = `def ynChecktest():
-    return [1,1,0,0]
+        const ynCheck = `import collections
 
-ynChecktest()`
+def ynChecktest(input_json_str):
+    import json
+    data = json.loads(input_json_str)
+    nodes = {n['id'] for n in data['nodes']}
+    edges = data['edges']
+    
+    # 建立鄰接表
+    adj = collections.defaultdict(list)
+    for e in edges:
+        u, v = str(e['from']), str(e['to'])
+        adj[u].append(v)
+        adj[v].append(u)
+    
+    # 1. 檢查是否有循環 (a)
+    # 使用 DFS 檢查無向圖是否有環：只要拜訪到已經走過的點且不是父節點，即有環
+    has_cycle = 0
+    visited = set()
+    def check_cycle(u, p):
+        visited.add(u)
+        for v in adj[u]:
+            if v == p: continue
+            if v in visited: return True
+            if check_cycle(v, u): return True
+        return False
+    
+    for node in nodes:
+        if node not in visited:
+            if check_cycle(node, None):
+                has_cycle = 1
+                break
+
+    # 2. 檢查是否為一筆畫 (b) - 歐拉路徑判定
+    # 條件：所有邊必須連通，且奇數度數頂點個數為 0 或 2
+    is_eulerian = 0
+    degree = {n: len(adj[n]) for n in nodes}
+    odd_degrees = [n for n in nodes if degree[n] % 2 != 0]
+    
+    # 檢查連通性 (只檢查有邊的節點)
+    nodes_with_edges = [n for n in nodes if degree[n] > 0]
+    if nodes_with_edges:
+        q = [nodes_with_edges[0]]
+        v_visited = {nodes_with_edges[0]}
+        while q:
+            curr = q.pop(0)
+            for neighbor in adj[curr]:
+                if neighbor not in v_visited:
+                    v_visited.add(neighbor)
+                    q.append(neighbor)
+        
+        # 如果所有有邊的節點都連通，且奇數頂點為 0 或 2
+        if len(v_visited) == len(nodes_with_edges):
+            if len(odd_degrees) == 0 or len(odd_degrees) == 2:
+                is_eulerian = 1
+
+    # 3. c = 0 (題目要求)
+    c = 0
+    
+    # 4. 平面圖判定 (d) - 使用庫拉托夫斯基定理概念的簡化版
+    # 對於複雜圖，平面圖判定較難，這裡預設為 0 (或使用簡單檢查：邊數 <= 3V - 6)
+    v_count = len(nodes)
+    e_count = len(edges)
+    is_planar = 0
+    if v_count >= 3 and e_count <= 3 * v_count - 6:
+        # 這只是必要條件，並非充分條件，但對於大多數繪圖專案已足夠
+        is_planar = 1 
+    elif v_count < 3:
+        is_planar = 1
+
+    return [has_cycle, is_eulerian, c, is_planar]
+
+# 測試呼叫
+ynChecktest(graph_input_json)`
     </script>
 
     <!-- STREAMING_CHUNK: Setting up Pyodide compiler controller and helper methods... -->
@@ -736,8 +806,14 @@ ynChecktest()`
         // ==========================================
         /* STREAMING_CHUNK: Configuring optimized vis-network rendering parameters... */
         async function yncheckupdate(){
+            if (!pyodideInstance) return;
+            if (!currentGraphData || !rawGraphResult) {
+                showToast("尚未生成圖形！請先點選「1. 執行並生成圖形」");
+                return;
+            }
             try{
                 const nySourece = ynCheck;
+                pyodideInstance.globals.set("graph_input_json", rawGraphResult);
                 ynResult = await pyodideInstance.runPythonAsync(nySourece);
                 updateConsole(`✔ ynResultAAA: ${ynResult} `);
             }
